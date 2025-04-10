@@ -1,0 +1,12 @@
+J = {J0, J1, J2,...,J9}
+P = {P0, P1, P2..., P9}
+
+Meu jogo:
+
+ValorEsperado = J2*P2 + J4*P4 + J7*P7
+
+Jogo Adversario:
+
+ValorEperado = J0*P0
+
+func(mao) = ValorEsperado(mao);

@@ -1,0 +1,2 @@
+0.35342196796580305 => um flush nas comunitarias
+0.8342737088169092 => sequencia
