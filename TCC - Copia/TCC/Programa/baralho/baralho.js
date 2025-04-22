@@ -77,14 +77,17 @@ function fullHouse(jogadores, comunitarias) {
             if (quantidade >= 3 && trinca.length === 0) {
 
                 trinca = fullHouse.filter(carta => carta.valor === valor).slice(0, 3);
+                jogadores[j].melhorJogo = trinca;
             } else if (quantidade >= 2 && par.length === 0) {
 
                 par = fullHouse.filter(carta => carta.valor === valor).slice(0, 2);
+                jogadores[j].melhorJogo = par;
             }
         });
 
         if (trinca.length === 3 && par.length === 2) {
             salvarNoArquivo(`Jogador[${j}] tem um Full House!`);
+            jogadores[j].melhorJogo = trinca.concat(par);
         }
 
     }
@@ -116,14 +119,18 @@ function Pares(jogadores, comunitarias) {
             let quantidade = contagem[valor];
             if (quantidade >= 4 && quadra.length === 0) {
                 quadra = pares.filter(carta => carta.valor === valor).slice(0, 4)
+                jogadores[j].melhorJogo = quadra;
             } else if (quantidade >= 3 && trinca.length === 0) {
 
                 trinca = pares.filter(carta => carta.valor === valor).slice(0, 3);
+                jogadores[j].melhorJogo = trinca;
             } else if (quantidade >= 2) {
                 if ( par.length === 0) {
                     par = pares.filter(carta => carta.valor === valor).slice(0, 2);
+                    jogadores[j].melhorJogo = par;
                 }else{
                     doisPares++;
+                    par = pares.filter(carta => carta.valor === valor).slice(0, 2);
                 }
             }
         });
@@ -170,6 +177,7 @@ function StraightFlush(jogadores, comunitarias) {
             if (temFlush) {
                 // console.log(`Jogador [${j}] tem flush!`);
                 salvarNoArquivo(`Jogador [${j}] tem flush!`);
+                flush = flush.filter(carta => carta.naipe === naipeBase);
             }
         }
         //==============================================/=================================================================
@@ -185,6 +193,7 @@ function StraightFlush(jogadores, comunitarias) {
         if (flush.length >= 5) {
             if (flush[0].valor == 9 && flush[1].valor == 10 && flush[2].valor == 11 && flush[3].valor == 12 && flush[4].valor == 13) {
                 salvarNoArquivo(`Jogador [${j}] Tem umm Royal Straight Flush!!!!!`);
+                jogadores[j].melhorJogo = flush;
                 break;
             }
         }
@@ -197,6 +206,7 @@ function StraightFlush(jogadores, comunitarias) {
                 if (contadorSF >= 5) {
                     // console.log(`Jogador [${j}] tem sequência do mesmo Naipe!`);
                     salvarNoArquivo(`Jogador [${j}] tem sequência do mesmo Naipe!`);
+                    jogadores[j].melhorJogo = flush;
                     break;
                 }
             }
@@ -213,6 +223,7 @@ function StraightFlush(jogadores, comunitarias) {
                 if (contador >= 5) {
                     // console.log(`Jogador [${j}] tem sequência!`);
                     salvarNoArquivo(`Jogador [${j}] tem sequência!`);
+                    jogadores[j].melhorJogo = sequencia;
                     break;
                 }
             }

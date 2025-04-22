@@ -2,6 +2,7 @@ const readline = require('node:readline');
 const { stdin: input, stdout: output } = require('node:process');
 const { fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta } = require("./baralho/baralho.js");
 const { Jogador, Carta } = require("./Classes/classes.js")
+const {analisePar} = require("./estatisticas.js")
 
 
 function jogo(seed, numero_jogadores) {
@@ -37,6 +38,7 @@ function jogo(seed, numero_jogadores) {
   // Etapa 1: Sem comunitárias
   salvarNoArquivo("\n=== Etapa 1: Sem comunitárias ===\n");
   verificarEstado(jogadores, comunitarias);
+
   
 
   // Etapa 2: Com 3 comunitárias
@@ -47,6 +49,9 @@ function jogo(seed, numero_jogadores) {
     baralho = cartaParaRemover(baralho, baralho[carta])
   }
   verificarEstado(jogadores, comunitarias);
+  for (let j = 0; j < jogadores.length; j++) {
+   salvarNoArquivo( `Jogador[${j}]: tem ${(analisePar(jogadores[j], comunitarias, baralho) * 100).toFixed(2)}% de chance de ter par`);
+  }
 
   // Etapa 3: Com 4 comunitárias
   salvarNoArquivo("\n=== Etapa 3: Com 4 comunitárias ===\n");
@@ -81,8 +86,8 @@ function verificarEstado(jogadores, comunitarias) {
   salvarNoArquivo("Verificando combinações...");
   salvarNoArquivo("=====================================================================================");
   Pares(jogadores, comunitarias);
-  StraightFlush(jogadores, comunitarias);
   fullHouse(jogadores, comunitarias);
+  StraightFlush(jogadores, comunitarias);
   salvarNoArquivo("=====================================================================================");
 }
 
@@ -102,7 +107,7 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
   rl.close();
 
   // Executa os jogos após a resposta do usuário
-  for (let i = 0; i < 100000; i++) {
+  for (let i = 0; i < 100; i++) {
     salvarNoArquivo(`Jogo ${i} \n`);
     jogo(Math.random(), 9);
     salvarNoArquivo(`=====================================================================================`);
