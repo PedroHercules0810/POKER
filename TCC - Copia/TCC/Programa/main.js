@@ -38,6 +38,9 @@ function jogo(seed, numero_jogadores) {
   // Etapa 1: Sem comunitárias
   salvarNoArquivo("\n=== Etapa 1: Sem comunitárias ===\n");
   verificarEstado(jogadores, comunitarias);
+  for (let j = 0; j < jogadores.length; j++) {
+    salvarNoArquivo( `Jogador[${j}]: tem ${(analisePar(jogadores[j], comunitarias, baralho) * 100).toFixed(2)}% de chance de ter par`);
+   }
 
   
 
@@ -59,6 +62,9 @@ function jogo(seed, numero_jogadores) {
   comunitarias.push(baralho[carta]);
   baralho = cartaParaRemover(baralho, baralho[carta]);
   verificarEstado(jogadores, comunitarias);
+  for (let j = 0; j < jogadores.length; j++) {
+    salvarNoArquivo( `Jogador[${j}]: tem ${(analisePar(jogadores[j], comunitarias, baralho) * 100).toFixed(2)}% de chance de ter par`);
+   }
 
   //etapa 4: Com 5 comunitárias
   salvarNoArquivo("\n=== Etapa 4: Com 5 comunitárias ===\n");
@@ -66,6 +72,9 @@ function jogo(seed, numero_jogadores) {
   comunitarias.push(baralho[carta]);
   baralho = cartaParaRemover(baralho, baralho[carta]);
   verificarEstado(jogadores, comunitarias);
+  for (let j = 0; j < jogadores.length; j++) {
+    salvarNoArquivo( `Jogador[${j}]: tem ${(analisePar(jogadores[j], comunitarias, baralho) * 100).toFixed(2)}% de chance de ter par`);
+   }
 }
 
 function verificarEstado(jogadores, comunitarias) {
@@ -107,9 +116,9 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
   rl.close();
 
   // Executa os jogos após a resposta do usuário
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 1; i++) {
     salvarNoArquivo(`Jogo ${i} \n`);
-    jogo(Math.random(), 9);
+    jogo(0.23095245650559115, 9);
     salvarNoArquivo(`=====================================================================================`);
   }
 });
