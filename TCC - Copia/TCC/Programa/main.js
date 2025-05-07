@@ -1,6 +1,6 @@
 const readline = require('node:readline');
 const { stdin: input, stdout: output } = require('node:process');
-const { fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta } = require("./baralho/baralho.js");
+const { barraDeCarregamento,fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta } = require("./baralho/baralho.js");
 const { Jogador, Carta } = require("./Classes/classes.js")
 const {analisePar} = require("./estatisticas.js")
 
@@ -116,10 +116,13 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
   rl.close();
 
   // Executa os jogos após a resposta do usuário
-  for (let i = 0; i < 1; i++) {
+  let qntdJogos = 100000; 
+  for (let i = 0; i < qntdJogos; i++) {
     salvarNoArquivo(`Jogo ${i} \n`);
     jogo(0.23095245650559115, 9);
     salvarNoArquivo(`=====================================================================================`);
+
+    barraDeCarregamento(i + 1, qntdJogos); // Atualiza a barra de carregamento
   }
 });
 

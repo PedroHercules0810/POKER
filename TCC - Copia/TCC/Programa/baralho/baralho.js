@@ -4,6 +4,14 @@ const { log } = require('console');
 const { loadavg } = require('os');
 const { fork } = require('child_process');
 
+function barraDeCarregamento(atual, total, largura = 50) {
+    const progresso = Math.round((atual / total) * largura);
+    const barra = '█'.repeat(progresso) + '-'.repeat(largura - progresso);
+    process.stdout.write(`\r[${barra}] ${((atual / total) * 100).toFixed(2).replace('.', ',')}%`);
+    if (atual === total) {
+      console.log('\nConcluído!');
+    }
+}
 function removerDoisMenores(array) {
     return array.sort((a, b) => a - b).slice(2);
 }
@@ -235,4 +243,4 @@ function StraightFlush(jogadores, comunitarias) {
 
 }
 
-module.exports = { fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta }
+module.exports = { barraDeCarregamento,fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta }
