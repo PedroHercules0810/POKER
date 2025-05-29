@@ -109,14 +109,21 @@ const rl = readline.createInterface({ input, output });
 
 
 
+
+
 rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (resposta) => {
   if (resposta.toLowerCase() === "s") {
     limparArquivo();
   }
+  rl.question("Quantos jogos você quer rodar? ", (qntdJogosStr) => {
+    let qntdJogos = parseInt(qntdJogosStr, 10);
+    if (isNaN(qntdJogos) || qntdJogos <= 0) {
+      console.log("Número inválido. Usando 10 jogos por padrão.");
+      qntdJogos = 10;
+    }
   rl.close();
 
   // Executa os jogos após a resposta do usuário
-  let qntdJogos = 100000; 
   for (let i = 0; i < qntdJogos; i++) {
     salvarNoArquivo(`Jogo ${i} \n`);
     jogo(0.23095245650559115, 9);
@@ -124,6 +131,7 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
 
     barraDeCarregamento(i + 1, qntdJogos); // Atualiza a barra de carregamento
   }
+});
 });
 
 
