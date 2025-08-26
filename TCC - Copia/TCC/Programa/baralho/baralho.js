@@ -18,11 +18,14 @@ function limparArquivo() {
     fs.writeFileSync('saida_jogo.txt', '', 'utf8');
 }
 
-
+//função que escreve a carta para ficar mais facil a vizualização
 function escreveCarta(valor, naipe) {
+    //valores descritos em ordem crescente, em relação ao poker
     let valores = [2, 3, 4, 5, 6, 7, 8, 9, 10, "valete", "Dama", "Rei", "Ás"]
+    //naipes das cartas
     let naipes = ["Paus", "Copas", "Espadas", "Ouros"]
 
+    //retornando a carta escrita por extenso
     return (`${valores[valor]} de ${naipes[naipe]}`)
 }
 

@@ -126,7 +126,7 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
   // Executa os jogos após a resposta do usuário
   for (let i = 0; i < qntdJogos; i++) {
     salvarNoArquivo(`Jogo ${i} \n`);
-    jogo(0.23095245650559115, 9);
+    jogo(Math.random(), 9);
     salvarNoArquivo(`=====================================================================================`);
 
     barraDeCarregamento(i + 1, qntdJogos); // Atualiza a barra de carregamento
