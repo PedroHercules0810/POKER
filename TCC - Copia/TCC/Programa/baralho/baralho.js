@@ -1,19 +1,14 @@
 const fs = require('fs');
 const set = require("../Classes/classes");
-const { log } = require('console');
-const { loadavg } = require('os');
-const { fork } = require('child_process');
+
 
 function barraDeCarregamento(atual, total, largura = 50) {
     const progresso = Math.round((atual / total) * largura);
     const barra = '█'.repeat(progresso) + '-'.repeat(largura - progresso);
     process.stdout.write(`\r[${barra}] ${((atual / total) * 100).toFixed(2).replace('.', ',')}%`);
     if (atual === total) {
-      console.log('\nConcluído!');
+        console.log('\nConcluído!');
     }
-}
-function removerDoisMenores(array) {
-    return array.sort((a, b) => a - b).slice(2);
 }
 
 function salvarNoArquivo(texto) {
@@ -33,13 +28,19 @@ function escreveCarta(valor, naipe) {
 
 //funcao que cria o baralho
 function criaBaralho() {
+    //um vetor é criado para comportar todo o baralho
     let baralho = [];
+    //Laço de repetição que cria as 52 cartas do baralho
     for (let l = 0; l < 52; l++) {
+        //calculando o valor da carta 
         let valor = 1 + (l % 13)
+        //calculando o naipe da carta
         let naipe = 1 + (l % 4)
+        //criando o objeto da carta e o adicionando ao baralho
         baralho[l] = new set.Carta(naipe, valor);
     }
 
+    //retornando o baralho
     return baralho;
 }
 
@@ -133,10 +134,10 @@ function Pares(jogadores, comunitarias) {
                 trinca = pares.filter(carta => carta.valor === valor).slice(0, 3);
                 jogadores[j].melhorJogo = trinca;
             } else if (quantidade >= 2) {
-                if ( par.length === 0) {
+                if (par.length === 0) {
                     par = pares.filter(carta => carta.valor === valor).slice(0, 2);
                     jogadores[j].melhorJogo = par;
-                }else{
+                } else {
                     doisPares++;
                     par = pares.filter(carta => carta.valor === valor).slice(0, 2);
                 }
@@ -147,7 +148,7 @@ function Pares(jogadores, comunitarias) {
             salvarNoArquivo(`Jogador[${j}] tem uma Quadra!`);
         } else if (trinca.length === 3) {
             salvarNoArquivo(`Jogador[${j}] tem uma Trinca!`);
-        } else if (doisPares >=1) {
+        } else if (doisPares >= 1) {
             salvarNoArquivo(`Jogador[${j}] tem dois Pares!`);
         }
         else if (par.length === 2) {
@@ -243,4 +244,4 @@ function StraightFlush(jogadores, comunitarias) {
 
 }
 
-module.exports = { barraDeCarregamento,fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta }
+module.exports = { barraDeCarregamento, fullHouse, Pares, StraightFlush, cartaAleatoria, cartaParaRemover, criaBaralho, limparArquivo, salvarNoArquivo, escreveCarta }
