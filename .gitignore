@@ -1,3 +1,5 @@
-# Ignorar o arquivo saida_jogo.txt
-TCC - Copia/TCC/Programa/saida_jogo.txt
-TCC - Copia\TCC\node_modules
+# Ignorar o arquivo de saída do jogo
+TCC - Copia/TCC/saida_jogo.txt
+
+# Ignorar dependências
+TCC - Copia/TCC/node_modules/
