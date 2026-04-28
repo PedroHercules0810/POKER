@@ -1,94 +1,136 @@
 const { Jogador } = require('../models/jogador');
 const { criaBaralho, cartaAleatoria, cartaParaRemover } = require('../services/baralhoService');
-const { Pares, fullHouse, StraightFlush } = require('../services/combinacoesService');
-const { analisePar } = require('../services/estatisticasService');
+const { calcularEquityMonteCarlo } = require('../services/estatisticasService');
+const aiService = require('../services/iaService');
 const { salvarNoArquivo, escreveCarta } = require('../views/consoleView');
 
-function choose(...options) {
-    const randomIndex = Math.floor(Math.random() * options.length);
-    return options[randomIndex];
-}
+async function executarRodadaApostas(jogadores, comunitarias, pote) {
+    let apostaMaisAlta = 0;
+    
+    for (let index = 0; index < jogadores.length; index++) {
+        const jogador = jogadores[index];
+        if (!jogador.ativo || jogador.fichas <= 0) continue;
 
-function verificarEstado(jogadores, comunitarias) {
-    salvarNoArquivo("Cartas comunitárias:");
-    comunitarias.forEach((carta, index) => {
-        salvarNoArquivo(`Carta[${index}]: ${escreveCarta(carta.valor - 1, carta.naipe - 1)}`);
-    });
+        salvarNoArquivo(`\n--- Turno do Jogador[${index}] ---`);
+        salvarNoArquivo(`Fichas: ${jogador.fichas} | Pote Atual: ${pote}`);
 
-    jogadores.forEach((jogador, index) => {
-        salvarNoArquivo(`Jogador[${index}]: \nCarta 1: ${escreveCarta(jogador.carta_1.valor - 1, jogador.carta_1.naipe - 1)} \nCarta 2: ${escreveCarta(jogador.carta_2.valor - 1, jogador.carta_2.naipe - 1)}`);
-        jogadores[index].acao = choose("raise", "fold", "call");
-        salvarNoArquivo(`Ação do jogador ${index}: ${jogadores[index].acao}`);
-        salvarNoArquivo("=====================================================================================");
-    });
+        // 1. Obter probabilidade via Monte Carlo
+        const numOponentesAtivos = jogadores.filter(j => j !== jogador && j.ativo).length;
+        const equity = calcularEquityMonteCarlo(jogador, comunitarias, numOponentesAtivos, 200);
 
-    salvarNoArquivo("Verificando combinações...");
-    salvarNoArquivo("=====================================================================================");
-    Pares(jogadores, comunitarias);
-    fullHouse(jogadores, comunitarias);
-    StraightFlush(jogadores, comunitarias);
-    salvarNoArquivo("=====================================================================================");
-}
+        // 2. Montar Estado para a Rede Neural
+        const apostaParaCobrir = apostaMaisAlta - jogador.apostaAtual;
+        const estadoAtual = aiService.obterEstado(equity, pote, apostaParaCobrir, jogador.fichas);
 
-function logEstatisticas(jogadores, comunitarias, baralho) {
-    for (let j = 0; j < jogadores.length; j++) {
-        salvarNoArquivo(`Jogador[${j}]: tem ${(analisePar(jogadores[j], comunitarias, baralho) * 100).toFixed(2)}% de chance de ter par`);
+        salvarNoArquivo(`[Parâmetros Ocultos da IA] -> Equity MC: ${(equity * 100).toFixed(2)}% | Aposta a cobrir: ${apostaParaCobrir}`);
+
+        // 3. IA Decide a Ação
+        const { acao, logPredicao } = aiService.decidirAcao(estadoAtual);
+        salvarNoArquivo(logPredicao);
+
+        // Guardar estado atual para aplicar reforço depois
+        jogador.ultimoEstado = estadoAtual;
+        jogador.ultimaAcao = acao;
+        jogador.fichasIniciaisRodada = jogador.fichas; // Para calcular recompensa
+
+        // Executar ação (0: Fold, 1: Call/Check, 2: Raise)
+        if (acao === 0) { // Fold
+            jogador.ativo = false;
+            salvarNoArquivo(`Decisão: FOLD`);
+        } else if (acao === 1) { // Call / Check
+            const valorCall = Math.min(apostaParaCobrir, jogador.fichas);
+            jogador.fichas -= valorCall;
+            jogador.apostaAtual += valorCall;
+            pote += valorCall;
+            salvarNoArquivo(`Decisão: CALL/CHECK de ${valorCall}`);
+        } else if (acao === 2) { // Raise
+            const valorRaise = Math.min(apostaParaCobrir + 50, jogador.fichas); // Raise fixo de 50 para simplificar
+            jogador.fichas -= valorRaise;
+            jogador.apostaAtual += valorRaise;
+            apostaMaisAlta = jogador.apostaAtual;
+            pote += valorRaise;
+            salvarNoArquivo(`Decisão: RAISE de ${valorRaise}`);
+        }
     }
+    return pote;
 }
 
-function jogo(seed, numero_jogadores) {
+async function jogo(seed, numero_jogadores) {
+    salvarNoArquivo(`\nUsando a seed: ${seed}`);
     const seedrandom = require('seedrandom');
     const rng = seedrandom(seed);
 
-    salvarNoArquivo(`Usando a seed: ${seed}`);
-
-    const jogadores = [];
+    let jogadores = Array.from({ length: numero_jogadores }, () => new Jogador());
     let comunitarias = [];
     let baralho = criaBaralho();
+    let pote = 0;
 
-    // Distribui cartas aos jogadores
+    // Cobrar Blind (simplificado: todos pagam 10 de ante para evitar fold eterno sem punição)
+    jogadores.forEach(j => {
+        j.fichas -= 10;
+        pote += 10;
+    });
+
+    // Distribui cartas
     for (let j = 0; j < numero_jogadores; j++) {
-        jogadores[j] = new Jogador();
+        let r1 = cartaAleatoria(baralho.length, rng());
+        jogadores[j].carta_1 = baralho[r1];
+        baralho = cartaParaRemover(baralho, baralho[r1]);
 
-        const random_1 = cartaAleatoria(baralho.length, rng());
-        jogadores[j].carta_1 = baralho[random_1];
-        baralho = cartaParaRemover(baralho, baralho[random_1]);
-
-        const random_2 = cartaAleatoria(baralho.length, rng());
-        jogadores[j].carta_2 = baralho[random_2];
-        baralho = cartaParaRemover(baralho, baralho[random_2]);
+        let r2 = cartaAleatoria(baralho.length, rng());
+        jogadores[j].carta_2 = baralho[r2];
+        baralho = cartaParaRemover(baralho, baralho[r2]);
     }
 
-    // Etapa 1: Sem comunitárias
-    salvarNoArquivo("\n=== Etapa 1: Sem comunitárias ===\n");
-    verificarEstado(jogadores, comunitarias);
-    logEstatisticas(jogadores, comunitarias, baralho);
+    const fases = [
+        { nome: "Pre-Flop", cartas: 0 },
+        { nome: "Flop", cartas: 3 },
+        { nome: "Turn", cartas: 1 },
+        { nome: "River", cartas: 1 }
+    ];
 
-    // Etapa 2: Com 3 comunitárias (Flop)
-    salvarNoArquivo("\n=== Etapa 2: Com 3 comunitárias ===\n");
-    for (let i = 0; i < 3; i++) {
-        const carta = cartaAleatoria(baralho.length, rng());
-        comunitarias[i] = baralho[carta];
-        baralho = cartaParaRemover(baralho, baralho[carta]);
+    for (let fase of fases) {
+        salvarNoArquivo(`\n=== Fase: ${fase.nome} ===`);
+        for (let i = 0; i < fase.cartas; i++) {
+            let c = cartaAleatoria(baralho.length, rng());
+            comunitarias.push(baralho[c]);
+            baralho = cartaParaRemover(baralho, baralho[c]);
+        }
+        
+        if (comunitarias.length > 0) {
+            salvarNoArquivo("Comunitárias na mesa:");
+            comunitarias.forEach(c => salvarNoArquivo(`${escreveCarta(c.valor - 1, c.naipe - 1)}`));
+        }
+
+        // Se sobrou só um jogador ativo, encerra a mão
+        if (jogadores.filter(j => j.ativo).length <= 1) break;
+
+        pote = await executarRodadaApostas(jogadores, comunitarias, pote);
     }
-    verificarEstado(jogadores, comunitarias);
-    logEstatisticas(jogadores, comunitarias, baralho);
 
-    // Etapa 3: Com 4 comunitárias (Turn)
-    salvarNoArquivo("\n=== Etapa 3: Com 4 comunitárias ===\n");
-    let carta = cartaAleatoria(baralho.length, rng());
-    comunitarias.push(baralho[carta]);
-    baralho = cartaParaRemover(baralho, baralho[carta]);
-    verificarEstado(jogadores, comunitarias);
-    logEstatisticas(jogadores, comunitarias, baralho);
+    // Definir Vencedor (Simplificado: o ativo com maior Equity final leva)
+    let vencedores = jogadores.filter(j => j.ativo);
+    if (vencedores.length > 0) {
+        // Ordena pela força via equity simulada
+        vencedores.sort((a, b) => calcularEquityMonteCarlo(b, comunitarias, 0, 1) - calcularEquityMonteCarlo(a, comunitarias, 0, 1));
+        const ganhador = vencedores[0];
+        ganhador.fichas += pote;
+        salvarNoArquivo(`\n=> VENCEDOR DO POTE (${pote} fichas): Jogador[${jogadores.indexOf(ganhador)}]`);
+    }
 
-    // Etapa 4: Com 5 comunitárias (River)
-    salvarNoArquivo("\n=== Etapa 4: Com 5 comunitárias ===\n");
-    carta = cartaAleatoria(baralho.length, rng());
-    comunitarias.push(baralho[carta]);
-    baralho = cartaParaRemover(baralho, baralho[carta]);
-    verificarEstado(jogadores, comunitarias);
-    logEstatisticas(jogadores, comunitarias, baralho);
+    // Treinamento: Avaliar ganhos e gravar na memória
+    for (let j of jogadores) {
+        if (j.ultimoEstado !== undefined) {
+            // Recompensa é a variação de fichas daquela rodada
+            const recompensa = j.fichas - j.fichasIniciaisRodada; 
+            const proximoEstado = aiService.obterEstado(0, 0, 0, j.fichas); // Estado terminal
+            aiService.lembrar(j.ultimoEstado, j.ultimaAcao, recompensa, proximoEstado, true);
+        }
+        j.apostaAtual = 0; // Reseta apostas
+    }
+
+    // Executa uma época de treinamento na rede neural
+    await aiService.treinar();
 }
 
 module.exports = { jogo };
