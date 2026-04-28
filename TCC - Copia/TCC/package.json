@@ -5,6 +5,7 @@
     "start": "node src/app.js"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "^4.17.0",
     "seedrandom": "^3.0.5"
   }
 }
