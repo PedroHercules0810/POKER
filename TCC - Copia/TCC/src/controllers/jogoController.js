@@ -1,6 +1,7 @@
 const { Jogador } = require('../models/jogador');
 const { criaBaralho, cartaAleatoria, cartaParaRemover } = require('../services/baralhoService');
 const { calcularEquityMonteCarlo } = require('../services/estatisticasService');
+const { avaliarForcaReal } = require('../services/combinacoesService'); // <-- ADICIONE ESTA LINHA
 const aiService = require('../services/iaService');
 const { salvarNoArquivo, escreveCarta } = require('../views/consoleView');
 
@@ -108,14 +109,25 @@ async function jogo(seed, numero_jogadores) {
         pote = await executarRodadaApostas(jogadores, comunitarias, pote);
     }
 
-    // Definir Vencedor (Simplificado: o ativo com maior Equity final leva)
-    let vencedores = jogadores.filter(j => j.ativo);
-    if (vencedores.length > 0) {
-        // Ordena pela força via equity simulada
-        vencedores.sort((a, b) => calcularEquityMonteCarlo(b, comunitarias, 0, 1) - calcularEquityMonteCarlo(a, comunitarias, 0, 1));
-        const ganhador = vencedores[0];
+    // === NOVO BLOCO DE SHOWDOWN (ITEM 1) ===
+    let jogadoresAtivos = jogadores.filter(j => j.ativo);
+    
+    if (jogadoresAtivos.length > 0) {
+        // Calcula a força real de cada jogador usando as 7 cartas (mão + mesa)
+        jogadoresAtivos.forEach(j => {
+            const seteCartas = [j.carta_1, j.carta_2, ...comunitarias];
+            j.forcaFinal = avaliarForcaReal(seteCartas);
+        });
+
+        // Ordena pela força real (decrescente)
+        jogadoresAtivos.sort((a, b) => b.forcaFinal - a.forcaFinal);
+
+        const ganhador = jogadoresAtivos[0];
+        // O vencedor recebe as fichas acumuladas no pote
         ganhador.fichas += pote;
-        salvarNoArquivo(`\n=> VENCEDOR DO POTE (${pote} fichas): Jogador[${jogadores.indexOf(ganhador)}]`);
+        
+        salvarNoArquivo(`\n=> VENCEDOR DO SHOWDOWN: Jogador[${jogadores.indexOf(ganhador)}]`);
+        salvarNoArquivo(`Força da Mão (Score): ${ganhador.forcaFinal} | Pote: ${pote} fichas`);
     }
 
     // Treinamento: Avaliar ganhos e gravar na memória
