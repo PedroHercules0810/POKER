@@ -32,7 +32,6 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
         // Guardar estado atual para aplicar reforço depois
         jogador.ultimoEstado = estadoAtual;
         jogador.ultimaAcao = acao;
-        jogador.fichasIniciaisRodada = jogador.fichas; // Para calcular recompensa
 
         // Executar ação (0: Fold, 1: Call/Check, 2: Raise)
         if (acao === 0) { // Fold
@@ -90,6 +89,8 @@ async function jogo(seed, numero_jogadores) {
         { nome: "River", cartas: 1 }
     ];
 
+    jogadores.forEach(j => j.fichasNoInicioDaMao = j.fichas);
+
     for (let fase of fases) {
         salvarNoArquivo(`\n=== Fase: ${fase.nome} ===`);
         for (let i = 0; i < fase.cartas; i++) {
@@ -133,8 +134,8 @@ async function jogo(seed, numero_jogadores) {
     // Treinamento: Avaliar ganhos e gravar na memória
     for (let j of jogadores) {
         if (j.ultimoEstado !== undefined) {
-            // Recompensa é a variação de fichas daquela rodada
-            const recompensa = j.fichas - j.fichasIniciaisRodada; 
+            // A recompensa agora é o saldo final da mão menos o saldo inicial (Lucro ou Prejuízo real)
+            const recompensa = j.fichas - j.fichasNoInicioDaMao; 
             const proximoEstado = aiService.obterEstado(0, 0, 0, j.fichas); // Estado terminal
             aiService.lembrar(j.ultimoEstado, j.ultimaAcao, recompensa, proximoEstado, true);
         }
