@@ -7,12 +7,14 @@ const { salvarNoArquivo, escreveCarta } = require('../views/consoleView');
 
 async function executarRodadaApostas(jogadores, comunitarias, pote) {
     let apostaMaisAlta = 0;
-    
+
     for (let index = 0; index < jogadores.length; index++) {
         const jogador = jogadores[index];
         if (!jogador.ativo || jogador.fichas <= 0) continue;
 
         salvarNoArquivo(`\n--- Turno do Jogador[${index}] ---`);
+        // Dentro de executarRodadaApostas, logo após salvarNoArquivo(`\n--- Turno do Jogador[${index}] ---`);
+        salvarNoArquivo(`Cartas: [${escreveCarta(jogador.carta_1.valor - 1, jogador.carta_1.naipe - 1)}] e [${escreveCarta(jogador.carta_2.valor - 1, jogador.carta_2.naipe - 1)}]`);
         salvarNoArquivo(`Fichas: ${jogador.fichas} | Pote Atual: ${pote}`);
 
         // 1. Obter probabilidade via Monte Carlo
@@ -98,7 +100,7 @@ async function jogo(seed, numero_jogadores) {
             comunitarias.push(baralho[c]);
             baralho = cartaParaRemover(baralho, baralho[c]);
         }
-        
+
         if (comunitarias.length > 0) {
             salvarNoArquivo("Comunitárias na mesa:");
             comunitarias.forEach(c => salvarNoArquivo(`${escreveCarta(c.valor - 1, c.naipe - 1)}`));
@@ -112,7 +114,7 @@ async function jogo(seed, numero_jogadores) {
 
     // === NOVO BLOCO DE SHOWDOWN (ITEM 1) ===
     let jogadoresAtivos = jogadores.filter(j => j.ativo);
-    
+
     if (jogadoresAtivos.length > 0) {
         // Calcula a força real de cada jogador usando as 7 cartas (mão + mesa)
         jogadoresAtivos.forEach(j => {
@@ -126,16 +128,20 @@ async function jogo(seed, numero_jogadores) {
         const ganhador = jogadoresAtivos[0];
         // O vencedor recebe as fichas acumuladas no pote
         ganhador.fichas += pote;
-        
+
+        const categorias = ["Carta Alta", "Um Par", "Dois Pares", "Trinca", "Sequência", "Flush", "Full House", "Quadra", "Straight Flush"];
+        const categoriaIdx = Math.floor(ganhador.forcaFinal / 759375);
+        const nomeMão = categorias[categoriaIdx - 1] || "Desconhecida";
+
         salvarNoArquivo(`\n=> VENCEDOR DO SHOWDOWN: Jogador[${jogadores.indexOf(ganhador)}]`);
-        salvarNoArquivo(`Força da Mão (Score): ${ganhador.forcaFinal} | Pote: ${pote} fichas`);
+        salvarNoArquivo(`Mão Final: ${nomeMão} (Score: ${ganhador.forcaFinal})`);
     }
 
     // Treinamento: Avaliar ganhos e gravar na memória
     for (let j of jogadores) {
         if (j.ultimoEstado !== undefined) {
             // A recompensa agora é o saldo final da mão menos o saldo inicial (Lucro ou Prejuízo real)
-            const recompensa = j.fichas - j.fichasNoInicioDaMao; 
+            const recompensa = j.fichas - j.fichasNoInicioDaMao;
             const proximoEstado = aiService.obterEstado(0, 0, 0, j.fichas); // Estado terminal
             aiService.lembrar(j.ultimoEstado, j.ultimaAcao, recompensa, proximoEstado, true);
         }
