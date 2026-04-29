@@ -36,6 +36,7 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
         jogador.ultimaAcao = acao;
 
         // Executar ação (0: Fold, 1: Call/Check, 2: Raise)
+        // Executar ação (0: Fold, 1: Call/Check, 2: Raise Leve, 3: Raise Forte, 4: All-in)
         if (acao === 0) { // Fold
             jogador.ativo = false;
             salvarNoArquivo(`Decisão: FOLD`);
@@ -45,13 +46,34 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
             jogador.apostaAtual += valorCall;
             pote += valorCall;
             salvarNoArquivo(`Decisão: CALL/CHECK de ${valorCall}`);
-        } else if (acao === 2) { // Raise
-            const valorRaise = Math.min(apostaParaCobrir + 50, jogador.fichas); // Raise fixo de 50 para simplificar
+        } else if (acao === 2) { // Raise Leve (+50)
+            const valorRaise = Math.min(apostaParaCobrir + 50, jogador.fichas); 
             jogador.fichas -= valorRaise;
             jogador.apostaAtual += valorRaise;
             apostaMaisAlta = jogador.apostaAtual;
             pote += valorRaise;
-            salvarNoArquivo(`Decisão: RAISE de ${valorRaise}`);
+            salvarNoArquivo(`Decisão: RAISE LEVE de ${valorRaise}`);
+        } else if (acao === 3) { // Raise Forte (+150)
+            const valorRaise = Math.min(apostaParaCobrir + 150, jogador.fichas); 
+            jogador.fichas -= valorRaise;
+            jogador.apostaAtual += valorRaise;
+            apostaMaisAlta = jogador.apostaAtual;
+            pote += valorRaise;
+            salvarNoArquivo(`Decisão: RAISE FORTE de ${valorRaise}`);
+        } else if (acao === 4) { // All-in (Aposta a vida)
+            const valorRaise = jogador.fichas; 
+            jogador.fichas -= valorRaise;
+            jogador.apostaAtual += valorRaise;
+            apostaMaisAlta = Math.max(apostaMaisAlta, jogador.apostaAtual); 
+            pote += valorRaise;
+            
+            // --- DETECTOR DE BLEFE ---
+            // Se a probabilidade de vitória (Equity) for menor que 30% e a IA for pro tudo ou nada, é um blefe claro!
+            if (equity < 0.30) {
+                salvarNoArquivo(`Decisão: ALL-IN DE ${valorRaise} FICHAS! 🚨 [ALERTA DE BLEFE DETECTADO - Equity: ${(equity * 100).toFixed(1)}%]`);
+            } else {
+                salvarNoArquivo(`Decisão: ALL-IN DE ${valorRaise} FICHAS! (Aposta por valor)`);
+            }
         }
     }
     return pote;

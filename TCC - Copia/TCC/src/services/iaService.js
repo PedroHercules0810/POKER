@@ -12,14 +12,14 @@ class PokerAI {
 
     createModel() {
         const model = tf.sequential();
-        // Input: [Equity(MC), Pote, ApostaParaCobrir, MinhasFichas]
         model.add(tf.layers.dense({ units: 16, inputShape: [4], activation: 'relu' }));
         model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
-        // Output: Q-Values para 3 ações: 0=Fold, 1=Call/Check, 2=Raise
-        model.add(tf.layers.dense({ units: 3, activation: 'linear' }));
+        // ALTERAÇÃO: Agora temos 5 saídas em vez de 3
+        model.add(tf.layers.dense({ units: 5, activation: 'linear' }));
         model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
         return model;
     }
+
 
     obterEstado(equityMC, pote, apostaParaCobrir, minhasFichas) {
         // Normalização básica para ajudar a rede
@@ -27,21 +27,22 @@ class PokerAI {
     }
 
     // Retorna a ação escolhida e o log dos parâmetros
-    decidirAcao(estadoArray) {
+      decidirAcao(estadoArray) {
         let logPredicao = "";
         let acao;
 
         if (Math.random() <= this.epsilon) {
-            // Exploração: evita o fold eterno no início do treino
-            acao = Math.floor(Math.random() * 3);
+            // ALTERAÇÃO: Sorteia entre 0 e 4
+            acao = Math.floor(Math.random() * 5);
             logPredicao = `(Ação Aleatória - Explorando) - Ação escolhida: ${acao}`;
         } else {
-            // Explotação: usa a rede neural
             tf.tidy(() => {
                 const estadoTensor = tf.tensor2d([estadoArray]);
                 const predições = this.model.predict(estadoTensor).dataSync();
                 acao = predições.indexOf(Math.max(...predições));
-                logPredicao = `Predições da Rede (Q-Values) -> Fold: ${predições[0].toFixed(2)}, Call: ${predições[1].toFixed(2)}, Raise: ${predições[2].toFixed(2)} | Escolha: ${acao}`;
+                
+                // ALTERAÇÃO: Log detalhado com os 5 Q-Values
+                logPredicao = `Predições -> Fold: ${predições[0].toFixed(1)}, Call: ${predições[1].toFixed(1)}, R.Leve: ${predições[2].toFixed(1)}, R.Forte: ${predições[3].toFixed(1)}, All-in: ${predições[4].toFixed(1)} | Escolha: ${acao}`;
             });
         }
         return { acao, logPredicao };
