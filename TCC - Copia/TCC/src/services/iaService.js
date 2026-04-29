@@ -52,7 +52,7 @@ class PokerAI {
         if (this.memory.length > 2000) this.memory.shift(); // Limita o tamanho da memória
     }
 
-    async treinar(tamanhoLote = 32) {
+    async treinar(tamanhoLote = 32, epocasTreino = 1) { 
         if (this.memory.length < tamanhoLote) return;
 
         const lote = [];
@@ -76,7 +76,7 @@ class PokerAI {
         }
 
         const alvosTensor = tf.tensor2d(qValoresAtuais);
-        await this.model.fit(estados, alvosTensor, { epochs: 1, verbose: 0 });
+        await this.model.fit(estados, alvosTensor, { epochs: epocasTreino, verbose: 0 });
 
         estados.dispose();
         proximosEstados.dispose();

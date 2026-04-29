@@ -57,7 +57,7 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
     return pote;
 }
 
-async function jogo(seed, numero_jogadores) {
+async function jogo(seed, numero_jogadores, epocas = 1) { 
     salvarNoArquivo(`\nUsando a seed: ${seed}`);
     const seedrandom = require('seedrandom');
     const rng = seedrandom(seed);
@@ -149,7 +149,10 @@ async function jogo(seed, numero_jogadores) {
     }
 
     // Executa uma época de treinamento na rede neural
-    await aiService.treinar();
+    await aiService.treinar(32, epocas); 
+    
+    return jogadores;
 }
+
 
 module.exports = { jogo };
