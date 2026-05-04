@@ -35,7 +35,6 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
         jogador.ultimoEstado = estadoAtual;
         jogador.ultimaAcao = acao;
 
-        // Executar ação (0: Fold, 1: Call/Check, 2: Raise)
         // Executar ação (0: Fold, 1: Call/Check, 2: Raise Leve, 3: Raise Forte, 4: All-in)
         if (acao === 0) { // Fold
             jogador.ativo = false;
@@ -46,30 +45,29 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
             jogador.apostaAtual += valorCall;
             pote += valorCall;
             salvarNoArquivo(`Decisão: CALL/CHECK de ${valorCall}`);
-        } else if (acao === 2) { // Raise Leve (+50)
-            const valorRaise = Math.min(apostaParaCobrir + 50, jogador.fichas); 
+        } else if (acao === 2) { // Raise Leve (+150)
+            const valorRaise = Math.min(apostaParaCobrir + 150, jogador.fichas);
             jogador.fichas -= valorRaise;
             jogador.apostaAtual += valorRaise;
             apostaMaisAlta = jogador.apostaAtual;
             pote += valorRaise;
             salvarNoArquivo(`Decisão: RAISE LEVE de ${valorRaise}`);
-        } else if (acao === 3) { // Raise Forte (+150)
-            const valorRaise = Math.min(apostaParaCobrir + 150, jogador.fichas); 
+        } else if (acao === 3) { // Raise Forte (+300)
+            const valorRaise = Math.min(apostaParaCobrir + 300, jogador.fichas);
             jogador.fichas -= valorRaise;
             jogador.apostaAtual += valorRaise;
             apostaMaisAlta = jogador.apostaAtual;
             pote += valorRaise;
             salvarNoArquivo(`Decisão: RAISE FORTE de ${valorRaise}`);
-        } else if (acao === 4) { // All-in (Aposta a vida)
-            const valorRaise = jogador.fichas; 
+        } else if (acao === 4) { // All-in 
+            const valorRaise = jogador.fichas;
             jogador.fichas -= valorRaise;
             jogador.apostaAtual += valorRaise;
-            apostaMaisAlta = Math.max(apostaMaisAlta, jogador.apostaAtual); 
+            apostaMaisAlta = Math.max(apostaMaisAlta, jogador.apostaAtual);
             pote += valorRaise;
-            
-            // --- DETECTOR DE BLEFE ---
-            // Se a probabilidade de vitória (Equity) for menor que 30% e a IA for pro tudo ou nada, é um blefe claro!
-            if (equity < 0.30) {
+
+            // Se a probabilidade de vitória (Equity) for menor que 10% e a IA dar All-In, é um forte indicativo de blefe. Logamos isso de forma destacada.
+            if (equity < 0.10) {
                 salvarNoArquivo(`Decisão: ALL-IN DE ${valorRaise} FICHAS! 🚨 [ALERTA DE BLEFE DETECTADO - Equity: ${(equity * 100).toFixed(1)}%]`);
             } else {
                 salvarNoArquivo(`Decisão: ALL-IN DE ${valorRaise} FICHAS! (Aposta por valor)`);
@@ -79,7 +77,7 @@ async function executarRodadaApostas(jogadores, comunitarias, pote) {
     return pote;
 }
 
-async function jogo(seed, numero_jogadores, epocas = 1) { 
+async function jogo(seed, numero_jogadores, epocas = 1) {
     salvarNoArquivo(`\nUsando a seed: ${seed}`);
     const seedrandom = require('seedrandom');
     const rng = seedrandom(seed);
@@ -134,7 +132,7 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
         pote = await executarRodadaApostas(jogadores, comunitarias, pote);
     }
 
-    // === NOVO BLOCO DE SHOWDOWN (ITEM 1) ===
+
     let jogadoresAtivos = jogadores.filter(j => j.ativo);
 
     if (jogadoresAtivos.length > 0) {
@@ -152,11 +150,16 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
         ganhador.fichas += pote;
 
         const categorias = ["Carta Alta", "Um Par", "Dois Pares", "Trinca", "Sequência", "Flush", "Full House", "Quadra", "Straight Flush"];
-        const categoriaIdx = Math.floor(ganhador.forcaFinal / 759375);
-        const nomeMão = categorias[categoriaIdx - 1] || "Desconhecida";
+        let categoriaIdx = Math.floor(ganhador.forcaFinal / 759375);
+        let nomeMao = categorias[categoriaIdx - 1] || "Desconhecida";
+
+        // Se a matemática base ultrapassar 7.540.000, significa obrigatoriamente que a carta alta é o Ás (14)
+        if (categoriaIdx === 9 && ganhador.forcaFinal >= 7540000) {
+            nomeMao = "👑 ROYAL FLUSH 👑";
+        }
 
         salvarNoArquivo(`\n=> VENCEDOR DO SHOWDOWN: Jogador[${jogadores.indexOf(ganhador)}]`);
-        salvarNoArquivo(`Mão Final: ${nomeMão} (Score: ${ganhador.forcaFinal})`);
+        salvarNoArquivo(`Mão Final: ${nomeMao} (Score: ${ganhador.forcaFinal})`);
     }
 
     // Treinamento: Avaliar ganhos e gravar na memória
@@ -171,8 +174,8 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
     }
 
     // Executa uma época de treinamento na rede neural
-    await aiService.treinar(32, epocas); 
-    
+    await aiService.treinar(32, epocas);
+
     return jogadores;
 }
 

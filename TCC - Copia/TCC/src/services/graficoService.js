@@ -3,9 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 async function gerarGraficoEvolucao(dadosRecompensa) {
-    const width = 800; // Largura da imagem
-    const height = 600; // Altura da imagem
-    // Fundo branco para ficar perfeito no PDF do TCC
+    const width = 1600; // Largura da imagem
+    const height = 780; // Altura da imagem
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
 
     const labelsEpisodios = dadosRecompensa.map((_, index) => `Jogo ${index + 1}`);
@@ -20,7 +19,7 @@ async function gerarGraficoEvolucao(dadosRecompensa) {
                 borderColor: 'rgb(54, 162, 235)', // Azul padrão
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 borderWidth: 2,
-                tension: 0.1, // Suavidade da linha
+                tension: 0.6, // Suavidade da linha
                 fill: true
             }]
         },
