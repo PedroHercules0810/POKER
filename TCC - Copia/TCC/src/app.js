@@ -21,28 +21,28 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
             console.log(`Iniciando simulação de ${qntdJogos} mãos com ${epocas} épocas de treino cada...`);
             
             let historicoRecompensas = []; 
+            let historicoEpsilon = []; // <-- NOVO ARRAY
+
+            const tempoDeInicio = Date.now(); 
 
             for (let i = 0; i < qntdJogos; i++) {
                 salvarNoArquivo(`\n================= JOGO ${i + 1} =================`);
                 
-                let tamanhoMemoriaAntes = aiService.memory.length;
-
-                // Passamos as épocas para dentro do jogo
                 let jogadoresDaMao = await jogo(Math.random(), 4, epocas); 
 
-                if (aiService.memory.length > tamanhoMemoriaAntes) {
-                    let agentePrincipal = jogadoresDaMao[0];
-                    let lucroPrejuizo = agentePrincipal.fichas - agentePrincipal.fichasNoInicioDaMao;
-                    historicoRecompensas.push(lucroPrejuizo);
-                } else {
-                    historicoRecompensas.push(0);
-                }
+                let agentePrincipal = jogadoresDaMao[0];
+                let lucroPrejuizo = agentePrincipal.fichas - agentePrincipal.fichasNoInicioDaMao;
+                historicoRecompensas.push(lucroPrejuizo);
                 
-                barraDeCarregamento(i + 1, qntdJogos);
+                // --- CAPTURA O EPSILON ATUAL DA IA ---
+                historicoEpsilon.push(aiService.epsilon); 
+                
+                barraDeCarregamento(i + 1, qntdJogos, tempoDeInicio);
             }
             
             console.log("\nTreinamento Finalizado. Gerando gráficos...");
-            await gerarGraficoEvolucao(historicoRecompensas);
+            // --- PASSA O HISTÓRICO DE EPSILON PARA O GRÁFICO ---
+            await gerarGraficoEvolucao(historicoRecompensas, historicoEpsilon); 
             console.log("Verifique o arquivo saida_jogo.txt e grafico_resultados.png");
         });
     });

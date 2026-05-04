@@ -3,12 +3,31 @@ const path = require('path');
 
 const ARQUIVO_SAIDA = path.join(__dirname, '..', '..', 'saida_jogo.txt');
 
-function barraDeCarregamento(atual, total, largura = 50) {
+function barraDeCarregamento(atual, total, startTime, largura = 50) { 
     const progresso = Math.round((atual / total) * largura);
     const barra = '█'.repeat(progresso) + '-'.repeat(largura - progresso);
-    process.stdout.write(`\r[${barra}] ${((atual / total) * 100).toFixed(2).replace('.', ',')}%`);
+    const percentual = ((atual / total) * 100).toFixed(2).replace('.', ',');
+
+    let tempoTexto = "";
+    
+    // Calcula o ETA se o tempo inicial for fornecido e já tivermos passado da primeira rodada
+    if (startTime && atual > 0) {
+        const agora = Date.now();
+        const tempoDecorridoMs = agora - startTime;
+        const tempoPorMao = tempoDecorridoMs / atual;
+        const tempoRestanteMs = tempoPorMao * (total - atual);
+
+        const restMinutos = Math.floor(tempoRestanteMs / 60000);
+        const restSegundos = Math.floor((tempoRestanteMs % 60000) / 1000).toString().padStart(2, '0');
+        
+        tempoTexto = ` | ETA: ${restMinutos}m ${restSegundos}s`;
+    }
+
+    // Escreve a barra sobrescrevendo a linha atual do terminal
+    process.stdout.write(`\r[${barra}] ${percentual}%${tempoTexto}`);
+    
     if (atual === total) {
-        console.log('\nConcluído!');
+        console.log('\nSimulação Concluída!');
     }
 }
 

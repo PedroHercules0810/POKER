@@ -35,6 +35,20 @@ async function executarRodadaApostas(jogadores, comunitarias, pote, apostaMaisAl
         jogador.ultimoEstado = estadoAtual;
         jogador.ultimaAcao = acao;
 
+        if (comunitarias.length > 0) {
+            // E a IA tem cartas muito fortes (ex: +60% de chance)
+            if (equity > 0.60) {
+                // Mas ela escolhe Fold (0) ou Check/Call (1)
+                if (acao === 0 || acao === 1) {
+                     jogador.penalidadePorPassividade = (jogador.penalidadePorPassividade || 0) - 20; 
+                }
+                // Se ela escolhe ser agressiva (2, 3 ou 4) com carta forte, ganha um bônus
+                else if (acao >= 2) {
+                     jogador.penalidadePorPassividade = (jogador.penalidadePorPassividade || 0) + 15;
+                }
+            }
+        }
+
         // Executar ação (0: Fold, 1: Call/Check, 2: Raise Leve, 3: Raise Forte, 4: All-in)
         if (acao === 0) { // Fold
             jogador.ativo = false;
@@ -206,6 +220,19 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
             aiService.lembrar(j.ultimoEstado, j.ultimaAcao, recompensa, proximoEstado, true);
         }
         j.apostaAtual = 0; // Reseta apostas
+    }
+
+    // Treinamento: Avaliar ganhos e gravar na memória
+    for (let j of jogadores) {
+        if (j.ultimoEstado !== undefined) {
+            // A recompensa = Saldo + Punições/Bônus
+            let recompensa = (j.fichas - j.fichasNoInicioDaMao) + (j.penalidadePorPassividade || 0);
+            
+            const proximoEstado = aiService.obterEstado(0, 0, 0, j.fichas); // Estado terminal
+            aiService.lembrar(j.ultimoEstado, j.ultimaAcao, recompensa, proximoEstado, true);
+        }
+        j.apostaAtual = 0; // Reseta apostas
+        j.penalidadePorPassividade = 0; // Zera para a próxima mão
     }
 
     // Executa uma época de treinamento na rede neural

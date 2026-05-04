@@ -3,11 +3,10 @@ const tf = require('@tensorflow/tfjs');
 class PokerAI {
     constructor() {
         this.model = this.createModel();
+        this.memory = []; // Buffer de replay
         this.epsilon = 1.0; // Taxa de exploração (começa em 100% aleatório)
         this.epsilonMin = 0.05; // Vai cair até explorar só 5% das vezes
-        this.epsilonDecay = 0.995; 
-        this.gamma = 0.95; // Fator de desconto para recompensas futuras
-        this.memory = []; // Buffer de replay
+        this.epsilonDecay = 0.95; 
     }
 
     createModel() {
@@ -50,7 +49,7 @@ class PokerAI {
 
     lembrar(estado, acao, recompensa, proximoEstado, finalizou) {
         this.memory.push({ estado, acao, recompensa, proximoEstado, finalizou });
-        if (this.memory.length > 2000) this.memory.shift(); // Limita o tamanho da memória
+        if (this.memory.length > 50000) this.memory.shift(); // Limita o tamanho da memória
     }
 
     async treinar(tamanhoLote = 32, epocasTreino = 1) { 
