@@ -43,7 +43,7 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
             console.log("\nTreinamento Finalizado. Gerando gráficos...");
             // --- PASSA O HISTÓRICO DE EPSILON PARA O GRÁFICO ---
             await gerarGraficoEvolucao(historicoRecompensas, historicoEpsilon); 
-            console.log("Verifique o arquivo saida_jogo.txt e grafico_resultados.png");
+            console.log("Verifique os arquivos grafico_desempenho.png e grafico_epsilon.png");;
         });
     });
 });

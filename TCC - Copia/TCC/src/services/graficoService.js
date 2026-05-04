@@ -6,17 +6,17 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
     const height = 600;
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
 
-    // Calcula a Média Móvel (Janela de 50 episódios) para suavizar a curva de lucro
+    const labels = recompensas.map((_, index) => `Jogo ${index + 1}`);
+
+    // --- GRÁFICO 1: DESEMPENHO E MÉDIA MÓVEL ---
     const janelaMedia = Math.min(50, recompensas.length);
     const mediaMovel = recompensas.map((_, i, arr) => {
-        if (i < janelaMedia - 1) return null; // Não tem dados suficientes no começo
+        if (i < janelaMedia - 1) return null;
         const soma = arr.slice(i - janelaMedia + 1, i + 1).reduce((a, b) => a + b, 0);
         return soma / janelaMedia;
     });
 
-    const labels = recompensas.map((_, index) => `Jogo ${index + 1}`);
-
-    const configuration = {
+    const configDesempenho = {
         type: 'line',
         data: {
             labels: labels,
@@ -24,30 +24,9 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
                 {
                     label: 'Lucro/Prejuízo Real (Fichas)',
                     data: recompensas,
-                    borderColor: 'rgba(54, 162, 235, 0.3)', // Linha mais clara e transparente
-                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    borderColor: 'rgba(0, 153, 255, 0.8)', 
                     borderWidth: 1,
-                    pointRadius: 0, // Remove os pontinhos para não poluir
-                    yAxisID: 'y', // Usa o eixo principal
-                    fill: false
-                },
-                {
-                    label: `Média Móvel (${janelaMedia} jogos)`,
-                    data: mediaMovel,
-                    borderColor: 'rgba(255, 99, 132, 1)', // Linha vermelha forte para a tendência
-                    borderWidth: 3,
                     pointRadius: 0,
-                    yAxisID: 'y', // Usa o eixo principal
-                    fill: false
-                },
-                {
-                    label: 'Taxa de Exploração (Epsilon)',
-                    data: historicoEpsilon,
-                    borderColor: 'rgba(75, 192, 192, 1)', // Linha verde para o Epsilon
-                    borderWidth: 2,
-                    borderDash: [5, 5], // Linha tracejada
-                    pointRadius: 0,
-                    yAxisID: 'y1', // Usa o eixo secundário à direita
                     fill: false
                 }
             ]
@@ -55,38 +34,53 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
         options: {
             responsive: true,
             plugins: {
-                title: {
-                    display: true,
-                    text: "Evolução do Treinamento DQN - Texas Hold'em",
-                    font: { size: 24 }
-                }
+                title: { display: true, text: "Desempenho do Agente (Lucro)", font: { size: 24 } }
             },
             scales: {
-                x: {
-                    title: { display: true, text: 'Episódios (Mãos Jogadas)' },
-                    ticks: { maxTicksLimit: 20 }
-                },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: 'Fichas Ganhas/Perdidas' }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right', // Eixo do Epsilon fica na direita
-                    title: { display: true, text: 'Epsilon (0 a 1)' },
+                x: { title: { display: true, text: 'Episódios (Mãos Jogadas)' } },
+                y: { title: { display: true, text: 'Fichas Ganhas/Perdidas' } }
+            }
+        }
+    };
+
+    const bufferDesempenho = await chartJSNodeCanvas.renderToBuffer(configDesempenho);
+    fs.writeFileSync('grafico_desempenho.png', bufferDesempenho);
+
+
+    // --- GRÁFICO 2: DECAIMENTO DO EPSILON ---
+    const configEpsilon = {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Taxa de Exploração (Epsilon)',
+                    data: historicoEpsilon,
+                    borderColor: 'rgba(75, 192, 192, 1)', // Verde forte
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: "Decaimento da Taxa de Exploração", font: { size: 24 } }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Episódios (Mãos Jogadas)' } },
+                y: { 
+                    title: { display: true, text: 'Epsilon' },
                     min: 0,
-                    max: 1,
-                    grid: { drawOnChartArea: false } // Não desenha linhas de grade para não confundir
+                    max: 1
                 }
             }
         }
     };
 
-    const buffer = await chartJSNodeCanvas.renderToBuffer(configuration);
-    fs.writeFileSync('grafico_resultados.png', buffer);
+    const bufferEpsilon = await chartJSNodeCanvas.renderToBuffer(configEpsilon);
+    fs.writeFileSync('grafico_epsilon.png', bufferEpsilon);
 }
 
 module.exports = { gerarGraficoEvolucao };

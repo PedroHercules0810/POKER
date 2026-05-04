@@ -5,8 +5,8 @@ class PokerAI {
         this.model = this.createModel();
         this.memory = []; // Buffer de replay
         this.epsilon = 1.0; // Taxa de exploração (começa em 100% aleatório)
-        this.epsilonMin = 0.05; // Vai cair até explorar só 5% das vezes
-        this.epsilonDecay = 0.95; 
+        this.epsilonMin = 0.01; // Vai cair até explorar só 1% das vezes
+        this.epsilonDecay = 0.995; 
     }
 
     createModel() {

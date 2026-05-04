@@ -1,6 +1,7 @@
 # Ignorar o arquivo de saída do jogo
 saida_jogo.txt
-grafico_resultados.png
+grafico_desempenho.png
+grafico_epsilon.png
 
 # Ignorar dependências
 node_modules/
