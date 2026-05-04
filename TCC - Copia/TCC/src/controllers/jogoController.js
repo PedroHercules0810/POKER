@@ -5,8 +5,8 @@ const { avaliarForcaReal } = require('../services/combinacoesService'); // <-- A
 const aiService = require('../services/iaService');
 const { salvarNoArquivo, escreveCarta } = require('../views/consoleView');
 
-async function executarRodadaApostas(jogadores, comunitarias, pote) {
-    let apostaMaisAlta = 0;
+async function executarRodadaApostas(jogadores, comunitarias, pote, apostaMaisAltaInicial = 0) {
+    let apostaMaisAlta = apostaMaisAltaInicial;
 
     for (let index = 0; index < jogadores.length; index++) {
         const jogador = jogadores[index];
@@ -113,6 +113,36 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
 
     jogadores.forEach(j => j.fichasNoInicioDaMao = j.fichas);
 
+    salvarNoArquivo("\n--- Cobrança de Blinds ---");
+    
+    // Define os valores fixos 
+    const SMALL_BLIND = 25;
+    const BIG_BLIND = 50;
+
+    // Sorteia aleatoriamente a posição do Small Blind nesta mão
+    // (Isso garante que o Jogador 0 / IA jogue em todas as posições ao longo do treino)
+    const sbIndex = Math.floor(Math.random() * jogadores.length);
+    const bbIndex = (sbIndex + 1) % jogadores.length;
+
+    // Cobrar Small Blind
+    if (jogadores[sbIndex].fichas >= SMALL_BLIND) {
+        jogadores[sbIndex].fichas -= SMALL_BLIND;
+        jogadores[sbIndex].apostaAtual += SMALL_BLIND;
+        pote += SMALL_BLIND;
+        salvarNoArquivo(`[BLIND] Jogador[${sbIndex}] pagou o Small Blind (${SMALL_BLIND})`);
+    }
+
+    // Cobrar Big Blind
+    if (jogadores[bbIndex].fichas >= BIG_BLIND) {
+        jogadores[bbIndex].fichas -= BIG_BLIND;
+        jogadores[bbIndex].apostaAtual += BIG_BLIND;
+        pote += BIG_BLIND;
+        salvarNoArquivo(`[BLIND] Jogador[${bbIndex}] pagou o Big Blind (${BIG_BLIND})`);
+    }
+
+    // A aposta inicial a ser batida no Pré-Flop não é mais 0, é o Big Blind!
+    let apostaMaisAlta = BIG_BLIND;
+
     for (let fase of fases) {
         salvarNoArquivo(`\n=== Fase: ${fase.nome} ===`);
         for (let i = 0; i < fase.cartas; i++) {
@@ -129,9 +159,14 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
         // Se sobrou só um jogador ativo, encerra a mão
         if (jogadores.filter(j => j.ativo).length <= 1) break;
 
-        pote = await executarRodadaApostas(jogadores, comunitarias, pote);
-    }
+        // Passamos a apostaMaisAlta (No Pré-Flop será 50, nas outras fases será 0)
+        pote = await executarRodadaApostas(jogadores, comunitarias, pote, apostaMaisAlta);
 
+        // Ao final de cada fase (Pre-Flop, Flop, Turn), as apostas "daquela rodada" são zeradas.
+        // O dinheiro já está no pote. A próxima carta vira e ninguém deve nada a ninguém.
+        apostaMaisAlta = 0;
+        jogadores.forEach(j => j.apostaAtual = 0); 
+    }
 
     let jogadoresAtivos = jogadores.filter(j => j.ativo);
 
