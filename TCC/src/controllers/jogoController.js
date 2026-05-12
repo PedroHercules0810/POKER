@@ -202,8 +202,8 @@ async function jogo(seed, numero_jogadores, epocas = 1) {
         let categoriaIdx = Math.floor(ganhador.forcaFinal / 759375);
         let nomeMao = categorias[categoriaIdx - 1] || "Desconhecida";
 
-        // Se a matemática base ultrapassar 7.540.000, significa obrigatoriamente que a carta alta é o Ás (14)
-        if (categoriaIdx === 9 && ganhador.forcaFinal >= 7540000) {
+        // Se a matemática base ultrapassar 7.492.500, significa obrigatoriamente que a carta alta é o Ás (14)
+        if (categoriaIdx === 9 && ganhador.forcaFinal >= 7492500) {
             nomeMao = "👑 ROYAL FLUSH 👑";
         }
 
