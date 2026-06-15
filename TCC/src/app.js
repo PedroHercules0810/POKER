@@ -35,7 +35,9 @@ rl.question("Deseja limpar o arquivo de saída antes de começar? (s/n): ", (res
                 historicoRecompensas.push(lucroPrejuizo);
                 
                 // --- CAPTURA O EPSILON ATUAL DA IA ---
-                historicoEpsilon.push(aiService.epsilon); 
+                if (i <= 700) {
+                    historicoEpsilon.push(aiService.epsilon); 
+                }
                 
                 barraDeCarregamento(i + 1, qntdJogos, tempoDeInicio);
             }

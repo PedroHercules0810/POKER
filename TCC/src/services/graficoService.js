@@ -7,6 +7,7 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
     const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
 
     const labels = recompensas.map((_, index) => `Jogo ${index + 1}`);
+    const labelsEpsilon = historicoEpsilon.map((_, index) => `Jogo ${index + 1}`);
 
     // --- GRÁFICO 1: DESEMPENHO E MÉDIA MÓVEL ---
     const janelaMedia = Math.min(50, recompensas.length);
@@ -51,15 +52,15 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
     const configEpsilon = {
         type: 'line',
         data: {
-            labels: labels,
+            labels: labelsEpsilon,
             datasets: [
                 {
                     label: 'Taxa de Exploração (Epsilon)',
                     data: historicoEpsilon,
-                    borderColor: 'rgba(75, 192, 192, 1)', // Verde forte
+                    borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 3,
                     pointRadius: 0,
-                    fill: false
+                    fill: true
                 }
             ]
         },
