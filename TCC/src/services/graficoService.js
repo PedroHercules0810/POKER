@@ -10,7 +10,7 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
     const labelsEpsilon = historicoEpsilon.map((_, index) => `Jogo ${index + 1}`);
 
     // --- GRÁFICO 1: DESEMPENHO E MÉDIA MÓVEL ---
-    const janelaMedia = Math.min(50, recompensas.length);
+    const janelaMedia = Math.min(100, recompensas.length);
     const mediaMovel = recompensas.map((_, i, arr) => {
         if (i < janelaMedia - 1) return null;
         const soma = arr.slice(i - janelaMedia + 1, i + 1).reduce((a, b) => a + b, 0);
@@ -29,7 +29,16 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
                     borderWidth: 1,
                     pointRadius: 0,
                     fill: false
-                }
+                },
+                {
+                label: `Média Móvel (${janelaMedia} jogos)`,
+                data: mediaMovel,
+                borderColor: 'rgba(255, 99, 71, 1)', // vermelho/laranja, contraste com o azul
+                borderWidth: 3,
+                pointRadius: 0,
+                fill: false,
+                tension: 0.2 // deixa a linha um pouco mais suave
+            }
             ]
         },
         options: {
