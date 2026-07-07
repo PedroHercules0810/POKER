@@ -23,22 +23,22 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
             labels: labels,
             datasets: [
                 {
+                    label: `Média Móvel (${janelaMedia} jogos)`,
+                    data: mediaMovel,
+                    borderColor: 'rgba(255, 99, 71, 1)', // vermelho/laranja, contraste com o azul
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.2 // deixa a linha um pouco mais suave
+                },
+                {
                     label: 'Lucro/Prejuízo Real (Fichas)',
                     data: recompensas,
-                    borderColor: 'rgba(0, 153, 255, 0.8)', 
+                    borderColor: 'rgba(0, 153, 255, 0.8)',
                     borderWidth: 1,
                     pointRadius: 0,
                     fill: false
-                },
-                {
-                label: `Média Móvel (${janelaMedia} jogos)`,
-                data: mediaMovel,
-                borderColor: 'rgba(255, 99, 71, 1)', // vermelho/laranja, contraste com o azul
-                borderWidth: 3,
-                pointRadius: 0,
-                fill: false,
-                tension: 0.2 // deixa a linha um pouco mais suave
-            }
+                }
             ]
         },
         options: {
@@ -80,7 +80,7 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
             },
             scales: {
                 x: { title: { display: true, text: 'Episódios (Mãos Jogadas)' } },
-                y: { 
+                y: {
                     title: { display: true, text: 'Epsilon' },
                     min: 0,
                     max: 1
