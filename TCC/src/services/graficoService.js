@@ -93,4 +93,58 @@ async function gerarGraficoEvolucao(recompensas, historicoEpsilon) {
     fs.writeFileSync('grafico_epsilon.png', bufferEpsilon);
 }
 
-module.exports = { gerarGraficoEvolucao };
+async function gerarGraficoLoss(historicoLoss) {
+    const width = 1200;
+    const height = 600;
+    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, backgroundColour: 'white' });
+
+    const labels = historicoLoss.map((_, index) => `Treino ${index + 1}`);
+
+    // Média móvel para suavizar o ruído típico de loss em RL
+    const janela = Math.min(50, historicoLoss.length);
+    const mediaMovel = historicoLoss.map((_, i, arr) => {
+        if (i < janela - 1) return null;
+        const soma = arr.slice(i - janela + 1, i + 1).reduce((a, b) => a + b, 0);
+        return soma / janela;
+    });
+
+    const configLoss = {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: `Média Móvel da Perda (${janela} treinos)`,
+                    data: mediaMovel,
+                    borderColor: 'rgba(255, 99, 71, 1)',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: 'Perda (MSE) por Treino',
+                    data: historicoLoss,
+                    borderColor: 'rgba(153, 102, 255, 0.6)',
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: "Perda (Loss) do Modelo durante o Treinamento", font: { size: 24 } }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Chamadas de Treino (model.fit)' } },
+                y: { title: { display: true, text: 'Erro Quadrático Médio (MSE)' } }
+            }
+        }
+    };
+
+    const bufferLoss = await chartJSNodeCanvas.renderToBuffer(configLoss);
+    fs.writeFileSync('grafico_loss.png', bufferLoss);
+}
+
+module.exports = { gerarGraficoEvolucao, gerarGraficoLoss };
